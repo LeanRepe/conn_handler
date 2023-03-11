@@ -2,7 +2,8 @@
 
 import json
 import argparse
-from . import MTCollector
+import sys
+from __init__ import MTCollector
 
 
 def file_manager(file, output = None, operation: str = 'read'):
@@ -20,16 +21,20 @@ def file_manager(file, output = None, operation: str = 'read'):
         list: return list of lines in read operations 
     """
     if operation == 'read':
-        if file.split('.')[1] == 'csv': # Check extension, placeholder for future csv support
-            raise ValueError('Type Not supported')
-        else:
-            with open(file, 'r') as read_file: 
-                temp_list = read_file.readlines()
-                content = []
-                for lines in temp_list: # loop for all lines removing newline
-                    content.append(lines.strip('\n'))
-                read_file.close()
-                return content
+        try:
+            if file.split('.')[1] == 'csv': # Check extension, placeholder for future csv support
+                raise ValueError('Type Not supported')
+            else:
+                with open(file, 'r') as read_file: 
+                    temp_list = read_file.readlines()
+                    content = []
+                    for lines in temp_list: # loop for all lines removing newline
+                        content.append(lines.strip('\n'))
+                    read_file.close()
+                    return content
+        except IndexError:
+            print('FILE PROVIDED WITH NO EXTENSION')
+            sys.exit(1)
     elif operation == 'write':
         with open(file, 'w+') as write_file:
             if file.split('.')[1] == 'json':    # check extension for .json
@@ -58,37 +63,37 @@ if __name__ == '__main__':
     # accepted arguments
     parser = argparse.ArgumentParser(description='Multi Thread connector, standalone running')
     parser.add_argument('-d', '-device', help='Set device to get outputs from')
-    parser.add_argument('-fd', '-filedevice', help='Set intput file for devices. Support TXT')
+    parser.add_argument('-f', '-filedevice', help='Set intput file for devices. Support TXT')
     parser.add_argument('-s', '-show', help='Set show command to get from device')
-    parser.add_argument('-fs', '-fileshow', help='Set input file for shows. Support TXT')
+    parser.add_argument('-l', '-listshow', help='Set input file for shows. Support TXT')
     parser.add_argument('-o', '-output', help='Set output to file. NOTE: takes current working directoy as default')
-    parser.add_argument('-up', '-userpass', help='Username:password to login. NOTE: if password contains ":" use -u -p arguments')
+    parser.add_argument('-c', '-combuserpass', help='Username:password to login. NOTE: if password contains ":" use -u -p arguments')
     parser.add_argument('-u', '-username', help='Set username to login. Note: prefer metod is -up')
     parser.add_argument('-p', '-password', help='Set password to login. Note: prefer metod is -up')
-    parser.add_argument('-os', '-ostype', help='Set OS type for end devices. Default: XR')
-    parser.add_argument('-loglvl', help='Set the logging level for the script. Default ERROR')
-    parser.add_argument('')
+    parser.add_argument('-t', '-typeos', help='Set OS type for end devices. Default: XR')
+    #parser.add_argument('-loglvl', help='Set the logging level for the script. Default ERROR')
+    #parser.add_argument('')
     args = parser.parse_args()
-
+    
     # check arguments values
     if args.d != None: # device (d) or filedevice (fd) must be present
         device = args.d
-    elif args.fd != None:
-        filedevice = args.fd
+    elif args.f != None:
+        filedevice = args.f
         device = file_manager(filedevice)
     else:
         #logging.error('Argument Missing: use -d (device) or -fd (filedevice) to set destination device(s)')
         raise AttributeError('Argument Missing: device/filedevice')
     if args.s != None: # show (s) or fileshow (fs) must be present
         show = args.s
-    elif args.fs != None:
-        fileshow = args.fs
+    elif args.l != None:
+        fileshow = args.l
         show = file_manager(fileshow)
     else:
         #logging.error('Argument Missing: use -s (show) or -fs (fileshow) to set shows commands to extract from device(s)')
         raise AttributeError('Argument Missing: show/fileshow')
-    if args.up != None: # userpass (up) or username (u)/password (p) must be present
-        userpass = args.up.split(':')
+    if args.c != None: # userpass (up) or username (u)/password (p) must be present
+        userpass = args.c.split(':')
         username = userpass[0]
         password = userpass[1]
     else:
@@ -102,8 +107,8 @@ if __name__ == '__main__':
         output_file = args.o
     else:
         output_file = 'output_print'
-    if args.os != None: # set the end device operating system.
-        ostype = args.os
+    if args.t != None: # set the end device operating system.
+        ostype = args.t
     else:
         ostype = 'cisco_xr'
     
@@ -112,9 +117,9 @@ if __name__ == '__main__':
     if output_file == 'output_print':   # print output or send to file
         print(f'Results for output Job:\n\n')
         for device,output in result_collector.items():
-            print(f'-------------\n{device}\n-------------\n\n')
+            print(f'-------------\n{device}\n-------------\n')
             if device == 'not_connected':
-                for devices in device:
+                for devices in output:
                     print(f'\t{devices}\n')
             else:
                 for shows in output:

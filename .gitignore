@@ -8654,3 +8654,11 @@ mt_conn_handler.egg-info/dependency_links.txt
 mt_conn_handler.egg-info/PKG-INFO
 mt_conn_handler.egg-info/SOURCES.txt
 mt_conn_handler.egg-info/top_level.txt
+lib/python3.10/site-packages/socks-0.dist-info/INSTALLER
+lib/python3.10/site-packages/socks-0.dist-info/METADATA
+lib/python3.10/site-packages/socks-0.dist-info/RECORD
+lib/python3.10/site-packages/socks-0.dist-info/REQUESTED
+lib/python3.10/site-packages/socks-0.dist-info/top_level.txt
+lib/python3.10/site-packages/socks-0.dist-info/WHEEL
+mtcollector/__pycache__/__init__.cpython-310.pyc
+mtcollector/__pycache__/mtcollector.cpython-310.pyc

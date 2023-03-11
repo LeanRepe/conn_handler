@@ -7,7 +7,7 @@
 |   Based on Netmiko by K. Byers @ https://github.com/ktbyers/netmiko   |
 """
 
-from .mtcollector import MultiThreadConnector
+from mtcollector import MultiThreadConnector
 
 def MTCollector(devices, 
                 shows, 
