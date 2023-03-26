@@ -45,4 +45,3 @@ def MTCollector(devices,
                                                             log_filename)
     
     return output_collected
-                                                        

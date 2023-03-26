@@ -9,11 +9,11 @@
 
 import logging
 import ipaddress
+import socks
 from netmiko import ConnectHandler
 from netmiko.exceptions import NetMikoAuthenticationException as authException
 from netmiko.exceptions import NetMikoTimeoutException as timeOut
 from multiprocessing.dummy import Pool
-
 
 
 __author__ = "Leandro Repetto"
@@ -25,6 +25,7 @@ __maintainer__ = "Leandro Repetto"
 __email__ = "lrepetto@gmail.com"
 __status__ = "Testing"
 
+
 class MultiThreadConnector:
     """Main wrapper class for connection and multithreading
     """
@@ -34,10 +35,10 @@ class MultiThreadConnector:
     class Device:
         """Device subclass represents a device to connect to
         """
-        def __init__(self, 
-                    hostname: str = '', 
-                    ip: str = '', 
-                    os_type: str = 'cisco_xr') -> None:
+        def __init__(self,
+                     hostname: str = '',
+                     ip: str = '',
+                     os_type: str = 'cisco_xr') -> None:
             """main init for device class
 
             Args:
@@ -77,10 +78,10 @@ class MultiThreadConnector:
             return self.os_type
 
     @classmethod
-    def __connect_to(self, 
-                    device, 
-                    jumpserver: dict = {}
-                    ):
+    def __connect_to(self,
+                     device,
+                     jumpserver: dict = {}
+                     ):
         """Handles conection to a single device
 
         Args:
@@ -93,12 +94,23 @@ class MultiThreadConnector:
             if not connected:
             bool: False
         """
+
         conn_device = {
             'device_type': device.get_type(),
             'ip': device.get_ipaddress(),
             'username': self.username,  # main class attribute
             'password': self.password   # main class attribute
         }
+        if len(self.socks_proxy) > 0:
+            sock = socks.socksocket()
+            sock.set_proxy(
+                proxy_type=socks.SOCKS5,
+                addr=self.socks_proxy[0],
+                port=int(self.socks_proxy[1])
+            )
+            sock.connect((device.get_ipaddress(), 22))
+            conn_device['sock'] = sock
+            print(conn_device)
         try:
             connection_to = ConnectHandler(**conn_device)
             logging.info(f'connected to {device.get_hostname()}')
@@ -113,17 +125,15 @@ class MultiThreadConnector:
                 logging.error(f'Credentials failed for device {device.get_hostname()}')
                 return False
         except timeOut:
-            logging.error(f'Connection to {device.get_hostname()} timed out, is {device.get_ipaddress()} the rigth address?')
+            logging.error(f'Connection to {device.get_hostname()} timed out, is {device.get_ipaddress()} '
+                          f'the rigth address?')
             return False
         except Exception as error:
             logging.error(f'An Exception occured - f{error}')
             return False
 
     @classmethod
-    def __get_outputs(self,
-                     connection, 
-                     timeout: int = 30
-                     ):
+    def __get_outputs(self, connection, timeout: int = 30):
         """Handles output(s) collection for a single device
 
         Args:
@@ -135,11 +145,11 @@ class MultiThreadConnector:
         """
         outputs = []
         logging.info(f'Running show commands')
-        for show in self.show_list: # main class attribute show_list
+        for show in self.show_list:  # main class attribute show_list
             output = connection.send_command(show, read_timeout=timeout) # send show waits for output
             logging.debug(f'Gather information for {show} command')
             logging.debug(f'{output}')
-            outputs.append({show: output}) # uses show command as key, show must be unique
+            outputs.append({show: output})  # uses show command as key, show must be unique
         logging.info(f'Finished collecting outputs')
         return outputs
 
@@ -173,9 +183,7 @@ class MultiThreadConnector:
             self.main_dict[device.get_hostname()] = output # add output(s) to device dict
         else:
             self.non_connected.append(device.get_hostname())
-            
 
-    
     @classmethod
     def __pool_connection(self, max_threads, device):
         """Handles multithreading operations
@@ -198,15 +206,16 @@ class MultiThreadConnector:
         return
 
     @classmethod
-    def output_collector(self, 
-                        devices, 
-                        shows, 
-                        loglevel: str = 'error', 
-                        max_threads: int = 12, 
-                        user: str = '', 
-                        paswd: str = '', 
-                        os_type: str = 'cisco_xr', 
-                        log_filename: str = None
+    def output_collector(self,
+                         devices,
+                         shows,
+                         loglevel: str = 'error',
+                         max_threads: int = 12,
+                         user: str = '',
+                         paswd: str = '',
+                         os_type: str = 'cisco_xr',
+                         log_filename: str = None,
+                         socks_proxy: tuple = (),
                         ):
         """Connect in parallel to multiple devices and returns estrucutred outputs
 
@@ -221,6 +230,7 @@ class MultiThreadConnector:
             paswd (str, optional): password for username. Defaults to ''.
             os_type (str, optional): netmiko device_type. Defaults to 'cisco_xr'.
             log_filename (str, optional): set a file to save logs. Defaults to None.
+            socks_proxy (tuple, optional): ip,port tuplet for socks5 connection. Default empty
 
         Raises:
             TypeError: if device/show VAR are not supported
@@ -238,10 +248,11 @@ class MultiThreadConnector:
             self.show_list = shows.copy()
         else:
             logging.error('VAR shows out of type, supports str or list')
-            logging.debug(f'VAR shows out of type --\Value: {shows}')
+            logging.debug(f'VAR shows out of type --\nValue: {shows}')
             raise TypeError('VAR shows out of type, supports str or list')
         self.main_dict = {}
         self.non_connected = []
+        self.socks_proxy = socks_proxy
         log_level = getattr(logging, loglevel.upper())  # getting attribute based on input
         logging.basicConfig(format='%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                             datefmt='%Y-%m-%d:%H:%M:%S',
@@ -249,17 +260,17 @@ class MultiThreadConnector:
         device_list = []
         if type(devices) == dict:   # expected value for dict {hostname: ipaddress}
             for hostname in devices.keys():
-                if self.__check_ipaddress(devices[hostname]): # check if value ipaddress
-                    a = self.Device(hostname, devices[hostname], os_type)
-                    device_list.append(a)
-        elif type(devices) == list: #
+                if self.__check_ipaddress(devices[hostname]):  # check if value ipaddress
+                    device = self.Device(hostname, devices[hostname], os_type)
+                    device_list.append(device)
+        elif type(devices) == list:
             for i in devices:
                 if self.__check_ipaddress(i):   # check if value is ipaddress
                     a = self.Device('', i, os_type)
                     device_list.append(a)
         elif type(devices) == str:  # if value not ip, Raise Value error and stop exec
             if self.__check_ipaddress(devices):
-                max_threads = 1 # if single device set single working thread
+                max_threads = 1  # if single device set single working thread
             else:
                 raise ValueError('provided value not an ip address')
         else:   # if device type not supported rise TypeError
@@ -267,13 +278,13 @@ class MultiThreadConnector:
             logging.error(f'Argument type: {str(type(devices))}. Content: {devices}')
             raise TypeError('Argument provided not list or Dict')
         logging.info('Starting Pool mapping')
-        if max_threads > 1: # if single thread don't use multithread function
+        if max_threads > 1:  # if single thread don't use multithread function
             self.__pool_connection(max_threads, device_list)
         else:
             a = self.Device('', devices, os_type)
             self.__wrapper_output(a)
         logging.info('Ended pool mapping')
-        if len(self.non_connected) > 0: # if any device in non_connected, append to dict
+        if len(self.non_connected) > 0:  # if any device in non_connected, append to dict
             self.main_dict['not_connected'] = self.non_connected
         logging.debug(f'Returning data: \n{self.main_dict}')
         return self.main_dict
