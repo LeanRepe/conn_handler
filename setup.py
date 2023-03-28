@@ -6,5 +6,5 @@ setup(name='mtcollector',
       description='Multithread output collector', 
       author='L. Repetto', 
       author_email='leanrepetto@gmail.com', 
-      install_requires=['netmiko']
+      install_requires=['netmiko', 'socks']
       )
