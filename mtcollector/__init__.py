@@ -7,7 +7,8 @@
 |   Based on Netmiko by K. Byers @ https://github.com/ktbyers/netmiko   |
 """
 
-from mtcollector import MultiThreadConnector
+from .mtcollector import MultiThreadConnector
+
 
 def MTCollector(devices, 
                 shows, 
@@ -16,8 +17,9 @@ def MTCollector(devices,
                 user: str = '', 
                 paswd: str = '', 
                 os_type: str = 'cisco_xr', 
-                log_filename: str = None
-                ) -> MultiThreadConnector:
+                log_filename: str = None,
+                sock_proxy: tuple = None
+                ) -> dict:
     """Connect in parallel to multiple devices and returns strucutred outputs
 
         Args:
@@ -31,17 +33,19 @@ def MTCollector(devices,
             paswd (str, optional): password for username. Defaults to ''.
             os_type (str, optional): netmiko device_type. Defaults to 'cisco_xr'.
             log_filename (str, optional): set a file to save logs. Defaults to None.
+            sock_proxy (tuple, optional): set socks proxy support, default None (ip,port)
 
         Returns:
             dict: dict of devices and outputs = {device1: [{cmd1: ouput1}, {cmd2: output2}]}
     """
-    output_collected = MultiThreadConnector.output_collector(devices, 
-                                                            shows, 
-                                                            loglevel, 
-                                                            max_threads, 
-                                                            user,
-                                                            paswd,
-                                                            os_type,
-                                                            log_filename)
+    output_collected = MultiThreadConnector.output_collector(devices,
+                                                             shows,
+                                                             loglevel,
+                                                             max_threads,
+                                                             user,
+                                                             paswd,
+                                                             os_type,
+                                                             log_filename,
+                                                             sock_proxy)
     
     return output_collected
