@@ -124,9 +124,15 @@ class MultiThreadConnector:
             except authException:   # avoid user lockout
                 logging.error(f'Credentials failed for device {device.get_hostname()}')
                 return False
+            except EOFError:
+                logging.error(f'End Of File error received from {device.get_hostname()}')
+                return False
         except timeOut:
             logging.error(f'Connection to {device.get_hostname()} timed out, is {device.get_ipaddress()} '
                           f'the rigth address?')
+            return False
+        except EOFError:
+            logging.error(f'End Of File error received from {device.get_hostname()}')
             return False
         except Exception as error:
             logging.error(f'An Exception occured - f{error}')
