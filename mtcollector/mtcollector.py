@@ -26,6 +26,9 @@ __email__ = "lrepetto@gmail.com"
 __status__ = "Testing"
 
 
+
+
+
 class MultiThreadConnector:
     """Main wrapper class for connection and multithreading
     """
@@ -159,7 +162,7 @@ class MultiThreadConnector:
         logging.info(f'Finished collecting outputs')
         return outputs
 
-    def __check_ipaddress(ip):
+    def __check_ipaddress(ip: str) -> bool:
         """Check if value is an ip address
 
         Args:
@@ -177,7 +180,7 @@ class MultiThreadConnector:
             return False
 
     @classmethod
-    def __wrapper_output(self, device):
+    def __wrapper_output(self, device: Device) -> None:
         """wrapper function to connect and get output from device
 
         Args:
@@ -191,7 +194,7 @@ class MultiThreadConnector:
             self.non_connected.append(device.get_hostname())
 
     @classmethod
-    def __pool_connection(self, max_threads, device):
+    def __pool_connection(self, max_threads: int, device: list) -> None:
         """Handles multithreading operations
 
         Args:
@@ -222,7 +225,7 @@ class MultiThreadConnector:
                          os_type: str = 'cisco_xr',
                          log_filename: str = None,
                          socks_proxy: tuple = (),
-                        ):
+                         ) -> dict:
         """Connect in parallel to multiple devices and returns estrucutred outputs
 
         Args:
@@ -294,3 +297,16 @@ class MultiThreadConnector:
             self.main_dict['not_connected'] = self.non_connected
         logging.debug(f'Returning data: \n{self.main_dict}')
         return self.main_dict
+
+    @staticmethod
+    def single_output_unpack(output: list) -> str:
+        """static method to unpack single show outputs
+        Args:
+            output (list): list of dict{show: outcome} show commands
+
+        Return:
+            unpacked_output (str): unapcekd output from previous list
+        """
+        unpacked_output = [outcome for show, outcome in output[0].items()]
+        unpacked_output = unpacked_output[0]
+        return unpacked_output
