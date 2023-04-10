@@ -26,9 +26,6 @@ __email__ = "lrepetto@gmail.com"
 __status__ = "Testing"
 
 
-
-
-
 class MultiThreadConnector:
     """Main wrapper class for connection and multithreading
     """
@@ -81,10 +78,7 @@ class MultiThreadConnector:
             return self.os_type
 
     @classmethod
-    def __connect_to(self,
-                     device,
-                     jumpserver: dict = {}
-                     ):
+    def __connect_to(self, device,  jumpserver: dict = {}):
         """Handles conection to a single device
 
         Args:
@@ -162,6 +156,7 @@ class MultiThreadConnector:
         logging.info(f'Finished collecting outputs')
         return outputs
 
+    @staticmethod
     def __check_ipaddress(ip: str) -> bool:
         """Check if value is an ip address
 
@@ -310,3 +305,15 @@ class MultiThreadConnector:
         unpacked_output = [outcome for show, outcome in output[0].items()]
         unpacked_output = unpacked_output[0]
         return unpacked_output
+
+
+def MTCollector(devices,
+                shows,
+                **kwargs
+                ) -> dict:
+    """Factory func """
+    output_collected = MultiThreadConnector.output_collector(devices,
+                                                             shows,
+                                                             **kwargs)
+
+    return output_collected
