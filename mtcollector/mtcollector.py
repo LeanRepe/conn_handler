@@ -78,7 +78,7 @@ class MultiThreadConnector:
             return self.os_type
 
     @classmethod
-    def __connect_to(self, device,  jumpserver: dict = {}):
+    def __connect_to(self, device,  jumpserver: dict):
         """Handles conection to a single device
 
         Args:
@@ -107,7 +107,6 @@ class MultiThreadConnector:
             )
             sock.connect((device.get_ipaddress(), 22))
             conn_device['sock'] = sock
-            print(conn_device)
         try:
             connection_to = ConnectHandler(**conn_device)
             logging.info(f'connected to {device.get_hostname()}')
@@ -307,13 +306,8 @@ class MultiThreadConnector:
         return unpacked_output
 
 
-def MTCollector(devices,
-                shows,
-                **kwargs
-                ) -> dict:
+def MTCollector(devices, shows, **kwargs) -> dict:
     """Factory func """
-    output_collected = MultiThreadConnector.output_collector(devices,
-                                                             shows,
-                                                             **kwargs)
+    output_collected = MultiThreadConnector.output_collector(devices, shows, **kwargs)
 
     return output_collected
