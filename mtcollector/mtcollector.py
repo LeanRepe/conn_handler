@@ -218,7 +218,7 @@ class MultiThreadConnector:
                          paswd: str = '',
                          os_type: str = 'cisco_xr',
                          log_filename: str = None,
-                         socks_proxy: tuple = (),
+                         socks_proxy: list = None,
                          ) -> dict:
         """Connect in parallel to multiple devices and returns estrucutred outputs
 
@@ -242,6 +242,8 @@ class MultiThreadConnector:
         Returns:
             dict: dict of devices and outputs = {device1: [{cmd1: ouput1}, {cmd2: output2}]}
         """
+        if socks_proxy is None:
+            socks_proxy = []
         self.username = user
         self.password = paswd
         self.show_list = []
