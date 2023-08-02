@@ -78,7 +78,7 @@ class MultiThreadConnector:
             return self.os_type
 
     @classmethod
-    def __connect_to(self, device,  jumpserver: dict):
+    def __connect_to(self, device,  jumpserver: dict = None):
         """Handles conection to a single device
 
         Args:
@@ -274,10 +274,7 @@ class MultiThreadConnector:
                     a = self.Device('', i, os_type)
                     device_list.append(a)
         elif type(devices) == str:  # if value not ip, Raise Value error and stop exec
-            if self.__check_ipaddress(devices):
-                max_threads = 1  # if single device set single working thread
-            else:
-                raise ValueError('provided value not an ip address')
+            max_threads = 1  # if single device set single working thread
         else:   # if device type not supported rise TypeError
             logging.error(f'Argument provided not a String, List or Dict --')
             logging.error(f'Argument type: {str(type(devices))}. Content: {devices}')
